@@ -1,0 +1,61 @@
+Connect to the machine..
+Open terminal
+$sudo su
+pswd<abc1234>
+--Now you should be logged in as root
+
+root@c1~]#virtualbox
+--This contains two machines which will be used for cluster setup.
+--These machines have
+  openjdk-8 installed
+  firewall disabled
+  can ping each other
+  can ssh each other via root user:password less
+  selinux disabled
+--As of now start c1 by double clicking on it.
+--to login into machine for user osft<password:abc1234>
+
+--Note** Default user is osf <password:abc1234> and this user also has root privileges
+
+--make sure network is turned on for enp0s8 and its connected < top right corner look at network icon>
+--To check version and release
+root@c1~]#cat /etc/centos-release
+--To check disk space available
+root@c1~]#df -h
+
+==========================
+Local OpenShift Origin (OKD 3.x) Cluster on CentOS 7
+--Docker installed
+--Docker daemon is configured with an insecure registry parameter of 172.30.0.0/16
+--ipv4 forwarding enabled
+--firewall allows containers access to openshift master API(8443/tcp) and DNS(53/udp) endpoints (in our case firewalld has been stopped)
+#login as root
+$sudo su
+cd openshi<tab>
+./oc version
+
+#to start OpenShift Origin (OKD) Local cluster
+./oc cluster up
+The command above will:
+
+Start OKD Cluster listening on the local interface – 127.0.0.1:8443
+Start a web console listening on all interfaces at /console (127.0.0.1:8443).
+Launch Kubernetes system components.
+Provisions registry, router, initial templates, and a default project.
+The OpenShift cluster will run as an all-in-one container on a Docker host.
+
+./oc cluster status
+
+./oc login -u system:admin
+
+
+
+Thus cluster should be running and applications can be deployed...
+
+
+
+
+
+
+
+

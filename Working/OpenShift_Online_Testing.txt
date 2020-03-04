@@ -1,0 +1,151 @@
+Working with Openshift online-CLI (Deploying an application)
+--------------------
+
+Click on "Copy Login Command"
+
+For example:
+Your API token is
+MV_BvjXAjBMnCdLVcB5ReyJT0mKXDINtxd8H1xxVopU
+Log in with this token
+oc login --token=MV_BvjXAjBMnCdLVcB5ReyJT0mKXDINtxd8H1xxVopU --server=https://api.us-east-1.starter.openshift-online.com:6443
+
+Use this token directly against the API
+curl -H "Authorization: Bearer MV_BvjXAjBMnCdLVcB5ReyJT0mKXDINtxd8H1xxVopU" "https://api.us-east-1.starter.openshift-online.com:6443/apis/user.openshift.io/v1/users/~"
+
+
+Download the command-line tools to work from command line
+
+#1. Login to Openshift cluster:
+
+C:\Users\Win10\Downloads>oc login --token=MV_BvjXAjBMnCdLVcB5ReyJT0mKXDINtxd8H1xxVopU --server=https://api.us-east-1.starter.openshift-online.com:6443
+Logged into "https://api.us-east-1.starter.openshift-online.com:6443" as "zagria1711" using the token provided.
+
+You don't have any projects. You can try to create a new project, by running
+
+    oc new-project <projectname>
+
+Welcome! See 'oc help' to get started.
+
+#Look for projects
+C:\Users\Win10\Downloads>oc projects
+You are not a member of any projects. You can request a project to be created with the 'new-project' command.
+
+#2. Create a test project.
+C:\Users\Win10\Downloads>oc new-project myproject
+Already on project "myproject" on server "https://api.us-east-1.starter.openshift-online.com:6443".
+
+You can add applications to this project with the 'new-app' command. For example, try:
+
+    oc new-app django-psql-example
+
+to build a new example application in Python. Or use kubectl to deploy a simple Kubernetes application:
+
+    kubectl create deployment hello-node --image=gcr.io/hello-minikube-zero-install/hello-node
+
+#List projects
+C:\Users\Win10\Downloads>oc projects
+You have one project on this server: "myproject".
+Using project "myproject" on server "https://api.us-east-1.starter.openshift-online.com:6443".
+#optionally you can check projects from "online web console"
+
+#To switch to a project
+C:\Users\Win10\Downloads>oc project myproject
+Already on project "myproject" on server "https://api.us-east-1.starter.openshift-online.com:6443".
+
+#3. Tag an application image from Docker Hub registry.
+C:\Users\Win10\Downloads>oc tag --source=docker openshift/deployment-example:v2 deployment-example:latest
+Tag deployment-example:latest set to openshift/deployment-example:v2.
+
+#4. Deploy Application to OpenShift.
+C:\Users\Win10\Downloads>oc new-app deployment-example
+warning: Cannot find git. Ensure that it is installed and in your path. Git is required to work with git repositories.
+--> Found image da61bb2 (4 years old) in image stream "myproject/deployment-example" under tag "latest" for "deployment-example"
+
+    * This image will be deployed in deployment config "deployment-example"
+    * Port 8080/tcp will be load balanced by service "deployment-example"
+      * Other containers can access this service through the hostname "deployment-example"
+    * WARNING: Image "myproject/deployment-example:latest" runs as the 'root' user which may not be permitted by your cluster administrator
+
+--> Creating resources ...
+    deploymentconfig.apps.openshift.io "deployment-example" created
+    service "deployment-example" created
+--> Success
+    Application is not exposed. You can expose services to the outside world by executing one or more of the commands below:
+     'oc expose svc/deployment-example'
+    Run 'oc status' to view your app.
+
+#5. Show Application Deployment status.
+C:\Users\Win10\Downloads>oc status
+In project myproject on server https://api.us-east-1.starter.openshift-online.com:6443
+
+svc/deployment-example - 172.30.200.173:8080
+  dc/deployment-example deploys istag/deployment-example:latest
+    deployment #1 deployed 58 seconds ago - 1 pod
+
+
+2 infos identified, use 'oc status --suggest' to see details.
+
+#6. Get service detailed information. (Notice the IP Here)
+C:\Users\Win10\Downloads>oc get svc
+NAME                 TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+deployment-example   ClusterIP   172.30.200.173   <none>        8080/TCP   94s
+
+C:\Users\Win10\Downloads> oc describe svc deployment-example
+Name:              deployment-example
+Namespace:         myproject
+Labels:            app=deployment-example
+                   app.kubernetes.io/component=deployment-example
+                   app.kubernetes.io/instance=deployment-example
+Annotations:       openshift.io/generated-by: OpenShiftNewApp
+Selector:          deploymentconfig=deployment-example
+Type:              ClusterIP
+IP:                172.30.200.173
+Port:              8080-tcp  8080/TCP
+TargetPort:        8080/TCP
+Endpoints:         10.129.5.146:8080
+Session Affinity:  None
+Events:            <none>
+
+#7. Test App local access.
+curl http://172.30.200.173:8080
+
+#8. Show Pods status
+C:\Users\Win10\Downloads>oc get pods
+NAME                          READY   STATUS      RESTARTS   AGE
+deployment-example-1-76x55    1/1     Running     0          5m
+deployment-example-1-deploy   0/1     Completed   0          5m9s
+
+#9. Allow external access to the application.
+C:\Users\Win10\Downloads>oc expose service/deployment-example
+route.route.openshift.io/deployment-example exposed
+
+C:\Users\Win10\Downloads>oc get routes
+NAME                 HOST/PORT                                                                  PATH   SERVICES             PORT       TERMINATION   WILDCARD
+deployment-example   deployment-example-myproject.apps.us-east-1.starter.openshift-online.com          deployment-example   8080-tcp                 None
+
+#10. Test external access to the application.
+in browser--deployment-example-myproject.apps.us-east-1.starter.openshift-online.com 
+
+#delete test application
+
+C:\Users\Win10\Downloads>oc delete all -l app=deployment-example
+replicationcontroller "deployment-example-1" deleted
+service "deployment-example" deleted
+deploymentconfig.apps.openshift.io "deployment-example" deleted
+route.route.openshift.io "deployment-example" deleted
+
+====================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
