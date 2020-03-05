@@ -54,8 +54,9 @@ sudo sysctl -p
 #Ensure that your firewall allows containers access to the OpenShift master API (8443/tcp) and DNS (53/udp) endpoints
 
 DOCKER_BRIDGE=`docker network inspect -f "{{range .IPAM.Config }}{{ .Subnet }}{{end}}" bridge`
+
 #sudo firewall-cmd --permanent --new-zone dockerc
-optionally if required: sudo firewall-cmd --permanent --delete-zone dockerc
+sudo firewall-cmd --permanent --delete-zone dockerc
 #sudo firewall-cmd --permanent --zone dockerc --add-source $DOCKER_BRIDGE
 #sudo firewall-cmd --permanent --zone dockerc --add-port={80,443,8443}/tcp
 #sudo firewall-cmd --permanent --zone dockerc --add-port={53,8053}/udp
@@ -63,6 +64,7 @@ optionally if required: sudo firewall-cmd --permanent --delete-zone dockerc
 
 ===============
 #The above mention dockerc zone may give a problem later, thus do this..
+
 firewall-cmd --permanent --delete-zone dockerc
 firewall-cmd --permanent --new-zone dockerc
 firewall-cmd --permanent --zone dockerc --add-source 172.17.0.0/16
@@ -71,8 +73,37 @@ firewall-cmd --permanent --zone dockerc --add-port 53/udp
 firewall-cmd --permanent --zone dockerc --add-port 8053/udp
 firewall-cmd --reload
 =================
-#From openshift directory
-./oc cluster up --config openshift.local.clusterup/openshift-controller-manager/openshift-master.kubeconfig 
+#Download the Linux oc binary
+#we can download the Linux oc binary from openshift-origin-client-tools-VERSION-linux-64bit.tar.gz and place it in your path
+
+wget https://github.com/openshift/origin/releases/download/v3.11.0/openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz
+tar xvf openshift-origin-client-tools*.tar.gz
+root@c5:cd openshift-origin-client*/
+
+#Verify installation of OpenShift client utility
+$./oc version
+oc v3.11.0+0cbc58b
+kubernetes v1.11.0+d4cacc0
+features: Basic-Auth GSSAPI Kerberos SPNEGO
+
+#Start OpenShift Origin (OKD) Local Cluster
+Now bootstrap a local single server OpenShift Origin cluster by running the following command
+$./oc cluster up
+**Note**
+The command above will:
+
+Start OKD Cluster listening on the local interface – 127.0.0.1:8443
+Start a web console listening on all interfaces at /console (127.0.0.1:8443).
+Launch Kubernetes system components.
+Provisions registry, router, initial templates, and a default project.
+The OpenShift cluster will run as an all-in-one container on a Docker host.
+There are a number of options which can be applied when setting up 
+Openshift Origin, view them with:
+
+$./oc cluster up --help
+#if it complains about --config option, you can use this..
+
+$./oc cluster up --config openshift.local.clusterup/openshift-controller-manager/openshift-master.kubeconfig 
 Getting a Docker client ...
 Checking if image openshift/origin-control-plane:v3.11 is available ...
 Checking type of volume mount ...
@@ -141,13 +172,15 @@ I0305 11:05:03.423381   31214 interface.go:41] Finished installing "sample-templ
 I0305 11:05:44.233237   31214 interface.go:41] Finished installing "openshift-image-registry" "persistent-volumes" "openshift-web-console-operator" "sample-templates" "centos-imagestreams" "openshift-router"
 Login to server ...
 Creating initial project "myproject" ...
-Error: invalid configuration: Missing or incomplete configuration info.  Please login or point to an existing, complete config file:
+Error: invalid configuration: Missing or incomplete configuration info.  Please login or point to an existing, 
+complete config file:
 
   1. Via the command-line flag --config
   2. Via the KUBECONFIG environment variable
   3. In your home directory as ~/.kube/config
 
 To view or setup config directly use the 'config' command.
+
 [root@c5 openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit]# ./oc login -u system:admin --config openshift.local.clusterup/openshift-controller-manager/openshift-master.kubeconfig 
 Logged into "https://127.0.0.1:8443" as "system:admin" using existing credentials.
 
@@ -170,35 +203,6 @@ You have access to the following projects and can switch between them with 'oc p
 Using project "default".
 [root@c5 openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit]# 
 
-===============
-#Download the Linux oc binary
-#we can download the Linux oc binary from openshift-origin-client-tools-VERSION-linux-64bit.tar.gz and place it in your path
-
-wget https://github.com/openshift/origin/releases/download/v3.11.0/openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz
-tar xvf openshift-origin-client-tools*.tar.gz
-root@c5:cd openshift-origin-client*/
-
-#Verify installation of OpenShift client utility
-$./oc version
-oc v3.11.0+0cbc58b
-kubernetes v1.11.0+d4cacc0
-features: Basic-Auth GSSAPI Kerberos SPNEGO
-
-#Start OpenShift Origin (OKD) Local Cluster
-Now bootstrap a local single server OpenShift Origin cluster by running the following command
-$./oc cluster up
-
-The command above will:
-
-Start OKD Cluster listening on the local interface – 127.0.0.1:8443
-Start a web console listening on all interfaces at /console (127.0.0.1:8443).
-Launch Kubernetes system components.
-Provisions registry, router, initial templates, and a default project.
-The OpenShift cluster will run as an all-in-one container on a Docker host.
-There are a number of options which can be applied when setting up 
-Openshift Origin, view them with:
-
-$./oc cluster up --help
 
 #On a successful installation, you should get output similar to below
 Login to server …
@@ -213,6 +217,7 @@ You are logged in as:
 To login as administrator:
      oc login -u system:admin
 
+#Additional Info
 #Example below uses custom options.
 $./oc cluster up --routing-suffix=<ServerPublicIP>.xip.io \
  --public-hostname=<ServerPulicDNSName>
@@ -227,7 +232,7 @@ openshift.local.clusterup/ directory.
 output for the following command.
 
 $./oc cluster status
-Web console URL: https://okd.example.com:8443/console/
+Web console URL: https://127.0.0.1:8443/console/
 
 Config is at host directory 
 Volumes are at host directory 
@@ -236,29 +241,6 @@ Persistent volumes are at host directory
 Data will be discarded when cluster is destroyed
 
 #Using OpenShift Origin Cluster
-To login as an administrator, use:
-$./oc login -u system:admin
-Logged into "https://127.0.0.1:8443" as "system:admin" using existing credentials.
-
-You have access to the following projects and can switch between them with 'oc project <projectname>':
-
-  * default
-    kube-dns
-    kube-proxy
-    kube-public
-    kube-system
-    myproject
-    openshift
-    openshift-apiserver
-    openshift-controller-manager
-    openshift-core-operators
-    openshift-infra
-    openshift-node
-    openshift-service-cert-signer
-    openshift-web-console
-    testproject
-
-Using project "default".
 
 #As System Admin user, you can few information such as node status.
 $./oc get nodes
@@ -312,7 +294,8 @@ https://<IP|Hostname>:8443/console
 Username: developer
 Password: developer
 ===================
-
+##Note##IMPORTANT
+===================
 See if you see a dashboard
 If you are redirected to https://127.0.0.1:8443/ when trying to access OpenShift web console, then do this:
 1. Stop OpenShift Cluster
@@ -322,12 +305,12 @@ $./oc cluster down
 $ vi ./openshift.local.clusterup/openshift-controller-manager/openshift-master.kubeconfig
 
 Locate line “server: https://127.0.0.1:8443“, then replace with:
-server: https://serverip:8443
+server: https://yourserverip:8443
 
 3. Then start cluster:
 $./oc cluster up
 
-Deploy Test Application
+#Deploy Test Application
 --------------------
 1. Login to Openshift cluster:
 $./oc login 
