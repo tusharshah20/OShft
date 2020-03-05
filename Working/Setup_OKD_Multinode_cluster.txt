@@ -1,0 +1,177 @@
+Deploy openshift cluster 3.9 (multinode)
+------------------------------
+Note** Scan thru complete file, have a look at instructions /notes and then start the setup..
+
+--setup 4 centos 7 machines within vmbox
+--make sure they can ping each other, ssh each other for root user without password
+--setup DNS or update /etc/hosts as shown
+
+#in /etc/hosts of all 4 machines..
+
+ip1 master.openshift.example.com  master
+ip2 infra.openshift.example.com   infra
+ip3 node1.openshift.example.com   node1
+ip4 node4.openshift.example.com   node2
+
+#To check kernel
+rpm -q kernel --last | head -n 1 | awk '{print $1}' ; echo kernel-${uname -r}
+
+#Install the relevant packages
+yum install -y wget git zile nano net-tools docker-1.13.1 bind-utils iptables-services bridge-utils bash-completion
+kexec-tools openssl-devel httpd-tools NetworkManager python-cryptography python2-pip python-devel python-passlib 
+java-1.8.0-openjdk-headless "@Development Tools"
+
+#Install repositories:
+rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+sed -i -e "s/^enabled=1/enabled=6/" /etc/yum.repos.d/epel.repo
+vim /etc/yum.repos.d/Openshift.repo
+
+[openshift]
+name=Centos-OpenShift
+baseurl=http://mirror.centos.org/centos/7/paas/x86_64/openshift-origin39/
+gpgcheck=0
+enabled=1
+
+#start and enable networkmanager and docker services
+systemctl start NetworkManager
+systemctl enable NetworkManager
+systemctl status NetworkManager
+
+systemctl start docker
+systemctl enable docker
+systemctl status docker
+
+#Install Ansible Package and Clone OpenShift-Ansible Git Repo on Master Machine only uing EPEL Repo:
+yum -y --enablerepo=epel install ansible pyOpenSSL (just on master)
+git clone https://github.com/openshift/openshift-ansible.git (created by Openshift community,lot of inventory files have been created, playbooks etc as per versions)
+
+
+cd openshift-ansible && git fetch && git checkout release-3.9
+
+#make sure all nodes have ssh password less access
+cd ..
+
+vim inventory.ini
+[OSEv3:children]
+masters
+nodes
+etcd
+
+[masters]
+master.openshift.example.com openshift_ip=ipaddress
+
+[etcd]
+master.openshift.example.com openshift_ip=ipaddress
+
+[nodes]
+master.openshift.example.com openshift_ip=ipaddress openshift_schedulable=true
+infra.openshift.example.com openshift_ip=ipaddress openshift_schedulable=true openshift_node_labels="{'region': 'infra','zone':'default'}"
+node1.openshift.example.com openshift_ip=ipaddress openshift_schedulable=true openshift_node_labels="{'region': 'primary','zone':'default'}"
+node2.openshift.example.com openshift_ip=ipaddress openshift_schedulable=true openshift_node_labels="{'region': 'primary','zone':'default'}"
+
+[OSEv3:vars]
+debug_level=4
+ansible_ssh_user=root
+enable_excluders=False
+enable_docker_excluder=False
+openshift_enable_service_catalog=False
+ansible_service_broker_install=False
+
+containerized=True
+os_sdn_network_plugin_name='redhat/openshift-ovs-multitenant'
+openshift_disable_check=disk_availability,docker_storage,memory_availability,docker_image_availability
+
+openshift_node_kubelet_args={'pods-per-core': ['10']}
+
+#we can mention here enterprise if we have required license
+deployment_type=origin
+openshift_deployment_type=origin
+
+openshift_release=v3.9.0
+openshift_pkg_version=3.9.0
+openshift_image_tag=v3.9.0
+openshift_service_catalog_image_version=v3.9.0
+template_service_broker_image_version=v3.9.0
+osm_use_cockpit=true
+
+#put the router on dedicated infra node
+openshift_hosted_router_selector='region=infra'
+openshift_master_default_subdomain=apps.openshift.example.com
+openshift_public_hostname=master.openshift.example.com
+
+#put the image registry on dedicated infra node
+openshift_hosted_registry_selector='region=infra'
+
+#use htpasswd authentication with demo/demo
+openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider',
+'filename': '/etc/origin/master/htpasswd'}]
+
+:wq
+
+#use the ansible playbook command to check the prerequisites to 
+deploy openshift cluster on master:
+ansible-playbook -i inventory.ini platbooks/prerequistes.yml
+
+================
+Pull below docker images on master node if you want the installation to be quicker
+
+docker pull registry.fedoraproject.org/latest/etcd:latest && docker pull docker.io/openshift/openvswitch:v3.9.0 && docker pull docker.io/openshift/node:v3.9.0 && docker pull docker.io/openshift/origin:v3.9.0
+
+Pull below docker images on infra,node1,node2 if you want the installation to be quicker
+docker pull docker.io/openshift/openvswitch:v3.9.0 && docker pull docker.io/openshift/node:v3.9.0 && docker pull docker.io/openshift/origin:v3.9.0
+================
+on master:
+docker images
+
+on other nodes:
+docker images
+================
+#once prereq completed without error, use the below ansible platbook to deploy 
+OpenShift cluster on master:
+
+ansible-playbook -i inventory.ini playbooks/deploy_cluster.yml
+
+Have to wait 30-40 min before installation completes
+
+---
+while deployment is happening, check
+oc whoami
+oc get nodes
+oc get nodes -o wide
+---
+
+If any issue "yum downgrade ansible"
+and try with ansible-2.4 
+or go for 2.6.6
+yum -y --enablerepo=epel install ansible-2.6.6
+
+#once installation is completed, create a admin user in OpenShift with Password 'Pas$$w0rd'
+
+ls -l /etc/origin/master/htpasswd
+cat /etc/origin/master/htpasswd
+htpasswd /etc/origin/master/htpasswd admin
+
+New password:
+retype oassword:
+
+cat /etc/origin/master/htpasswd
+
+#assign cluster-admin role to admin user:
+oc adm policy add-cluster-role-to-user cluster-admin admin
+
+#login as admin
+oc login
+admin
+Paa$$w0rd
+===================
+
+
+
+
+
+
+
+
+
+
+
