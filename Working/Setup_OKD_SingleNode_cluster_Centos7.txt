@@ -61,33 +61,22 @@ sudo firewall-cmd --permanent --zone dockerc --add-port={80,443,8443}/tcp
 sudo firewall-cmd --permanent --zone dockerc --add-port={53,8053}/udp
 sudo firewall-cmd --reload
 
-#or optionally disable firewalld but better if above steps are done..
-
 #Download the Linux oc binary
 #we can download the Linux oc binary from openshift-origin-client-tools-VERSION-linux-64bit.tar.gz and place it in your path
 
 wget https://github.com/openshift/origin/releases/download/v3.11.0/openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz
 tar xvf openshift-origin-client-tools*.tar.gz
-cd openshift-origin-client*/
-sudo mv  oc kubectl  /usr/local/bin/
+root@c5:cd openshift-origin-client*/
 
 #Verify installation of OpenShift client utility
-$ oc version
-oc v3.11.0+0cbc58b
-kubernetes v1.11.0+d4cacc0
-features: Basic-Auth GSSAPI Kerberos SPNEGO
-
-or optionally untar>cd into openshift* directory (if above mentioned doesnt work after wget step)
-./oc version
+$./oc version
 oc v3.11.0+0cbc58b
 kubernetes v1.11.0+d4cacc0
 features: Basic-Auth GSSAPI Kerberos SPNEGO
 
 #Start OpenShift Origin (OKD) Local Cluster
 Now bootstrap a local single server OpenShift Origin cluster by running the following command
-$oc cluster up
-
-or ./oc cluster up
+$./oc cluster up
 
 The command above will:
 
@@ -96,11 +85,10 @@ Start a web console listening on all interfaces at /console (127.0.0.1:8443).
 Launch Kubernetes system components.
 Provisions registry, router, initial templates, and a default project.
 The OpenShift cluster will run as an all-in-one container on a Docker host.
-There are a number of options which can be applied when setting up Openshift Origin, view them with:
+There are a number of options which can be applied when setting up 
+Openshift Origin, view them with:
 
-$oc cluster up --help
-
-or ./oc cluster up --help
+$./oc cluster up --help
 
 #On a successful installation, you should get output similar to below
 Login to server …
@@ -116,27 +104,30 @@ To login as administrator:
      oc login -u system:admin
 
 #Example below uses custom options.
-$ oc cluster up --routing-suffix=<ServerPublicIP>.xip.io \
+$./oc cluster up --routing-suffix=<ServerPublicIP>.xip.io \
  --public-hostname=<ServerPulicDNSName>
 
 For example:
-$ oc cluster up --public-hostname=okd.example.com --routing-suffix='services.example.com'
+$./oc cluster up --public-hostname=okd.example.com --routing-suffix='services.example.com'
 
-#The OpenShift Origin cluster configuration files will be located inside the openshift.local.clusterup/ directory.
+#The OpenShift Origin cluster configuration files will be located inside the 
+openshift.local.clusterup/ directory.
 
-#If your cluster setup was successful, you should get a positive output for the following command.
+#If your cluster setup was successful, you should get a positive 
+output for the following command.
 
-$ oc cluster status
+$./oc cluster status
 Web console URL: https://okd.example.com:8443/console/
 
 Config is at host directory 
 Volumes are at host directory 
-Persistent volumes are at host directory /home/dev/openshift.local.clusterup/openshift.local.pv
+Persistent volumes are at host directory 
+/home/dev/openshift.local.clusterup/openshift.local.pv
 Data will be discarded when cluster is destroyed
 
 #Using OpenShift Origin Cluster
 To login as an administrator, use:
-$ oc login -u system:admin
+$./oc login -u system:admin
 Logged into "https://127.0.0.1:8443" as "system:admin" using existing credentials.
 
 You have access to the following projects and can switch between them with 'oc project <projectname>':
@@ -160,17 +151,18 @@ You have access to the following projects and can switch between them with 'oc p
 Using project "default".
 
 #As System Admin user, you can few information such as node status.
-$ oc get nodes
+$./oc get nodes
 NAME        STATUS    ROLES     AGE       VERSION
 localhost   Ready     <none>    1h        v1.11.0+d4cacc0
 
-$ oc get nodes -o wide
+$./oc get nodes -o wide
 
-#To get more detailed information about a specific node, including the reason for the current condition:
-$ oc describe node <node>
+#To get more detailed information about a specific node, 
+including the reason for the current condition:
+$./oc describe node <node>
 
 #To display a summary of the resources you created:
-$ oc status
+$./oc status
 In project default on server https://127.0.0.1:8443
 
 svc/docker-registry - 172.30.1.1:5000
@@ -186,18 +178,18 @@ svc/router - 172.30.235.156 ports 80, 443, 1936
 View details with 'oc describe <resource>/<name>' or list everything with 'oc get all'.
 
 #To return to the regular developer user, login as that user:
-$ oc login
+$./oc login
 Authentication required for https://127.0.0.1:8443 (openshift)
 Username: developer
 Password: developer
 Login successful.
 
 #Confirm if Login was successful.
-$ oc whoami
+$./oc whoami
 developer
 
 #create a test project using oc new-project command.
-$ oc new-project dev --display-name="Project1 - Dev" \
+$./oc new-project dev --display-name="Project1 - Dev" \
    --description="My Dev Project"
 
 Now using project "dev" on server "https://127.0.0.1:8443"
@@ -214,7 +206,7 @@ Password: developer
 See if you see a dashboard
 If you are redirected to https://127.0.0.1:8443/ when trying to access OpenShift web console, then do this:
 1. Stop OpenShift Cluster
-$ oc cluster down
+$./oc cluster down
 
 2. Edit OCP configuration file.
 $ vi ./openshift.local.clusterup/openshift-controller-manager/openshift-master.kubeconfig
@@ -223,12 +215,12 @@ Locate line “server: https://127.0.0.1:8443“, then replace with:
 server: https://serverip:8443
 
 3. Then start cluster:
-$ oc cluster up
+$./oc cluster up
 
 Deploy Test Application
 --------------------
 1. Login to Openshift cluster:
-$ oc login 
+$./oc login 
 Authentication required for https://https://127.0.0.1:8443 (openshift)
 Username: developer 
 Password: developer
@@ -239,14 +231,14 @@ You don't have any projects. You can try to create a new project, by running
     oc new-project 
 
 2. Create a test project.
-$ oc new-project test-project 
+$./oc new-project test-project 
 
 3. Tag an application image from Docker Hub registry.
-$ oc tag --source=docker openshift/deployment-example:v2 deployment-example:latest 
+$./oc tag --source=docker openshift/deployment-example:v2 deployment-example:latest 
 Tag deployment-example:latest set to openshift/deployment-example:v2.
 
 4. Deploy Application to OpenShift.
-$ oc new-app deployment-example 
+$./oc new-app deployment-example 
 --> Found image da61bb2 (3 years old) in image stream "test-project/deployment-example" under tag "latest" for "deployment-example"
 
     * This image will be deployed in deployment config "deployment-example"
@@ -263,7 +255,7 @@ $ oc new-app deployment-example
     Run 'oc status' to view your app.
 
 5. Show Application Deployment status.
-$ oc status
+$./oc status
 In project test-project on server https://127.0.0.1:8443
 
 svc/deployment-example - 172.30.15.201:8080
@@ -273,11 +265,11 @@ svc/deployment-example - 172.30.15.201:8080
 2 infos identified, use 'oc status --suggest' to see details.
 
 6. Get service detailed information.
-$ oc get svc
+$./oc get svc
 NAME                 TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
 deployment-example   ClusterIP   172.30.15.201           8080/TCP   18m
 
-$ oc describe svc deployment-example
+$./oc describe svc deployment-example
 Name:              deployment-example
 Namespace:         test-project
 Labels:            app=deployment-example
@@ -295,16 +287,16 @@ Events:            <none>
 curl http://172.30.15.201:8080
 
 8. Show Pods status
-$ oc get pods
+$./oc get pods
 NAME                         READY     STATUS    RESTARTS   AGE
 deployment-example-1-vmf7t   1/1       Running   0          21m
 
 9. Allow external access to the application.
 
-$ oc expose service/deployment-example
+$./oc expose service/deployment-example
 route.route.openshift.io/deployment-example exposed
 
-$ oc get routes
+$./oc get routes
 NAME                 HOST/PORT                                                       PATH      SERVICES             PORT       TERMINATION   WILDCARD
 deployment-example   deployment-example-testproject.services.computingforgeeks.com             deployment-example   8080-tcp                 None
 
