@@ -14,16 +14,14 @@ ip3 node1.openshift.example.com   node1
 ip4 node4.openshift.example.com   node2
 
 #To check kernel
-rpm -q kernel --last | head -n 1 | awk '{print $1}' ; echo kernel-${uname -r}
+rpm -q kernel --last | head -n 1 | awk '{print $1}' ; uname -r
 
 #Install the relevant packages
-yum install -y wget git zile nano net-tools docker-1.13.1 bind-utils iptables-services bridge-utils bash-completion
-kexec-tools openssl-devel httpd-tools NetworkManager python-cryptography python2-pip python-devel python-passlib 
-java-1.8.0-openjdk-headless "@Development Tools"
+yum install -y wget git nano net-tools docker-1.13.1 bind-utils iptables-services bridge-utils bash-completion kexec-tools openssl-devel httpd-tools NetworkManager python-cryptography python-devel python-passlib 
 
 #Install repositories:
 rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-sed -i -e "s/^enabled=1/enabled=6/" /etc/yum.repos.d/epel.repo
+sed -i -e "s/^enabled=1/enabled=0/" /etc/yum.repos.d/epel.repo
 vim /etc/yum.repos.d/Openshift.repo
 
 [openshift]
@@ -36,7 +34,6 @@ enabled=1
 systemctl start NetworkManager
 systemctl enable NetworkManager
 systemctl status NetworkManager
-
 systemctl start docker
 systemctl enable docker
 systemctl status docker
@@ -88,7 +85,7 @@ deployment_type=origin
 openshift_deployment_type=origin
 
 openshift_release=v3.9.0
-openshift_pkg_version=3.9.0
+openshift_pkg_version=-3.9.0
 openshift_image_tag=v3.9.0
 openshift_service_catalog_image_version=v3.9.0
 template_service_broker_image_version=v3.9.0
@@ -108,10 +105,26 @@ openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 
 
 :wq
 
+[root@master ~]# ls
+anaconda-ks.cfg  initial-setup-ks.cfg  inventory.ini  openShift  openshift-ansible
+[root@master ~]# ls openshift-ansible/
+ansible.cfg      DEPLOYMENT_TYPES.md  images                  OWNERS                                README.md         test
+ansible-profile  docs                 inventory               playbooks                             requirements.txt  test-requirements.txt
+BUILD.md         examples             LICENSE                 pytest.ini                            roles             tox.ini
+conftest.py      hack                 meta                    README_CONTAINER_IMAGE.md             setup.cfg         utils
+CONTRIBUTING.md  HOOKS.md             openshift-ansible.spec  README_CONTAINERIZED_INSTALLATION.md  setup.py
+[root@master ~]# ls openshift-ansible/playbooks/
+adhoc             common              openshift-checks     openshift-loadbalancer  openshift-nfs              openshift-web-console      roles
+aws               container-runtime   openshift-etcd       openshift-logging       openshift-node             openstack
+azure             deploy_cluster.yml  openshift-glusterfs  openshift-management    openshift-prometheus       prerequisites.yml
+byo               gcp                 openshift-grafana    openshift-master        openshift-provisioners     README.md
+cluster-operator  init                openshift-hosted     openshift-metrics       openshift-service-catalog  redeploy-certificates.yml
+
 #use the ansible playbook command to check the prerequisites to 
 deploy openshift cluster on master:
-ansible-playbook -i inventory.ini platbooks/prerequistes.yml
-
+ansible-playbook -i inventory.ini openshift-ansible/playbooks/prerequisites.yml
+#if error
+https://releases.ansible.com/ansible/rpm/release/epel-7-x86_64/ansible-2.4.6.0-1.el7.ans.noarch.rpm
 ================
 Pull below docker images on master node if you want the installation to be quicker
 
@@ -129,7 +142,7 @@ docker images
 #once prereq completed without error, use the below ansible platbook to deploy 
 OpenShift cluster on master:
 
-ansible-playbook -i inventory.ini playbooks/deploy_cluster.yml
+ansible-playbook -i inventory.ini openshift-ansible/playbooks/deploy_cluster.yml
 
 Have to wait 30-40 min before installation completes
 
@@ -139,11 +152,6 @@ oc whoami
 oc get nodes
 oc get nodes -o wide
 ---
-
-If any issue "yum downgrade ansible"
-and try with ansible-2.4 
-or go for 2.6.6
-yum -y --enablerepo=epel install ansible-2.6.6
 
 #once installation is completed, create a admin user in OpenShift with Password 'Pas$$w0rd'
 
