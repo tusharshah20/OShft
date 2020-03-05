@@ -310,6 +310,13 @@ server: https://yourserverip:8443
 3. Then start cluster:
 $./oc cluster up
 
+#Access OpenShift Console at https://127.0.0.1:8443/console > (if required advanced > accept risk (if certificate issue) and continue...
+#You can login as uname:system, pswd: admin
+
+======================
+##Note##IMPORTANT
+======================
+
 #Deploy Test Application
 --------------------
 1. Login to Openshift cluster:
